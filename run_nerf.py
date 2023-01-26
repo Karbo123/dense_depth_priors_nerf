@@ -310,7 +310,7 @@ def write_images_with_metrics(images, mean_metrics, far, args, with_test_time_op
         # write rgb
         cv2.imwrite(os.path.join(result_dir, str(n) + "_rgb" + ".jpg"), cv2.cvtColor(to8b(rgb), cv2.COLOR_RGB2BGR))
         # write depth
-        cv2.imwrite(os.path.join(result_dir, str(n) + "_d" + ".png"), to16b(depth))
+        cv2.imwrite(os.path.join(result_dir, str(n) + "_d" + ".png"), (depth * far * 1000).clip(0, 65535).round().astype(np.uint16))
 
     with open(os.path.join(result_dir, 'metrics.txt'), 'w') as f:
         mean_metrics.print(f)
@@ -796,7 +796,7 @@ def train_nerf(images, depths, valid_depths, poses, intrinsics, i_split, args, s
 
     # optimize nerf
     print('Begin')
-    N_iters = 500000 + 1
+    N_iters = args.train_steps + 1
     global_step = start
     start = start + 1
     for i in trange(start, N_iters):
@@ -928,6 +928,8 @@ def config_parser():
                         help='batch size (number of random rays per gradient step)')
     parser.add_argument("--lrate", type=float, default=5e-4, 
                         help='learning rate')
+    parser.add_argument("--train_steps", type=int, default=500000, 
+                        help='number of training steps')
     parser.add_argument("--start_decay_lrate", type=int, default=400000, 
                         help='start iteration for learning rate decay')
     parser.add_argument("--end_decay_lrate", type=int, default=500000, 
